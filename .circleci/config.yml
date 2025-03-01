@@ -1,90 +1,15 @@
 version: 2.1
-
-executors:
-  node_executor:
-    docker:
-      - image: cimg/node:lts
-  java_executor:
-    docker:
-      - image: cimg/openjdk:11.0
-  windows_executor:
-    machine:
-      image: windows-server-2019-vs2019:stable
-
-jobs:
-
-  build_node_app:
-    executor: node_executor
-    working_directory: ~/project/node-app
-    steps:
-      - checkout:
-          path: ~/project
-      - restore_cache:
-          keys:
-            - node-deps-{{ checksum "node-app/package-lock.json" }}
-      - run:
-          name: Install Dependencies
-          command: npm ci
-      - run:
-          name: Run Tests
-          command: npm test
-      - save_cache:
-          paths:
-            - ~/.npm
-          key: node-deps-{{ checksum "node-app/package-lock.json" }}
-      - setup_remote_docker
-      - run:
-          name: Build Docker Image
-          command: |
-            docker build -t myregistry/ctxcloud-node-app:${CIRCLE_SHA1} .
-            docker login -u $DOCKER_USER -p $DOCKER_PASS myregistry.example.com
-            docker push myregistry/ctxcloud-node-app:${CIRCLE_SHA1}
-
-  build_struts_app:
-    executor: java_executor
-    working_directory: ~/project/struts-app/src
-    steps:
-      - checkout:
-          path: ~/project
-      - restore_cache:
-          keys:
-            - maven-cache-{{ checksum "struts-app/src/pom.xml" }}
-      - run:
-          name: Build Struts Application
-          command: mvn -B clean package
-      - save_cache:
-          paths:
-            - ~/.m2/repository
-          key: maven-cache-{{ checksum "struts-app/src/pom.xml" }}
-      - store_artifacts:
-          path: target/*.war
-
-  build_windows_agent:
-    executor: windows_executor
-    working_directory: ~/project/windows-agent
-    steps:
-      - checkout:
-          path: ~/project
-      - run:
-          name: Install WiX Toolset
-          command: choco install wixtoolset -y
-      - run:
-          name: Restore NuGet packages
-          command: nuget restore ../ctxcloud.sln
-      - run:
-          name: Build Agent
-          command: msbuild ../ctxcloud.sln /p:Configuration=Release
-      - run:
-          name: Package Installer (WiX)
-          command: |
-            & "C:\Program Files (x86)\WiX Toolset v3.11\bin\candle.exe" installer.wxs -o installer.wixobj
-            & "C:\Program Files (x86)\WiX Toolset v3.11\bin\light.exe" installer.wixobj -o WindowsAgentInstaller.msi
-      - store_artifacts:
-          path: WindowsAgentInstaller.msi
-
+setup: true
+orbs:
+  path-filtering: circleci/path-filtering@1.0
 workflows:
-  ctxcloud_apps_pipeline:
+  filter-workflow:
     jobs:
-      - build_node_app
-      - build_struts_app
-      - build_windows_agent
+      - path-filtering/filter:
+          base-revision: main
+          mapping: |
+            node-app/.* build_node_app true
+            struts-app/.* build_struts_app true
+            windows-agent/.* build_windows_agent true
+            windows-agent.package/.* build_windows_agent true
+            ctxcloud.sln build_windows_agent true
