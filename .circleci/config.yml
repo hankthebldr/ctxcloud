@@ -1,11 +1,4 @@
-# .circleci/config.yml
-
 version: 2.1
-
-orbs:
-  # Example CircleCI orbs (optional)
-  docker: circleci/docker@1.0
-  # You could add scanning orbs from Snyk, Anchore, or others
 
 jobs:
   build-struts-app:
@@ -16,16 +9,14 @@ jobs:
       - run:
           name: Build Struts App
           command: |
+            echo "Files in current directory:"
+            ls -al
+            echo "Switching to struts-app folder..."
             cd struts-app
+            ls -al
             mvn clean package
-      - run:
-          name: Build Docker Image
-          command: |
-            cd struts-app
-            docker build -t my-struts-app .
+
 workflows:
   build-and-deploy:
     jobs:
       - build-struts-app
-      - build-node-app
-      - build-windows-agent
