@@ -1,6 +1,5 @@
 version: 2.1
 
-# Executors
 executors:
   node_executor:
     docker:
@@ -12,10 +11,8 @@ executors:
     machine:
       image: windows-server-2019-vs2019:stable
 
-# Jobs
 jobs:
 
-  # Node Application Job (Docker Image Build)
   build_node_app:
     executor: node_executor
     working_directory: ~/project/node-app
@@ -43,27 +40,25 @@ jobs:
             docker login -u $DOCKER_USER -p $DOCKER_PASS myregistry.example.com
             docker push myregistry/ctxcloud-node-app:${CIRCLE_SHA1}
 
-  # Struts Application Job (Java/Maven Build)
   build_struts_app:
     executor: java_executor
-    working_directory: ~/project/struts-app
+    working_directory: ~/project/struts-app/src
     steps:
       - checkout:
           path: ~/project
       - restore_cache:
           keys:
-            - maven-cache-{{ checksum "struts-app/pom.xml" }}
+            - maven-cache-{{ checksum "struts-app/src/pom.xml" }}
       - run:
           name: Build Struts Application
           command: mvn -B clean package
       - save_cache:
           paths:
             - ~/.m2/repository
-          key: maven-cache-{{ checksum "struts-app/pom.xml" }}
+          key: maven-cache-{{ checksum "struts-app/src/pom.xml" }}
       - store_artifacts:
           path: target/*.war
 
-  # Windows Agent Job (Build and Package Installer)
   build_windows_agent:
     executor: windows_executor
     working_directory: ~/project/windows-agent
@@ -87,24 +82,9 @@ jobs:
       - store_artifacts:
           path: WindowsAgentInstaller.msi
 
-# Workflows
 workflows:
   ctxcloud_apps_pipeline:
     jobs:
-      - build_node_app:
-          filters:
-            paths:
-              only:
-                - node-app/**
-      - build_struts_app:
-          filters:
-            paths:
-              only:
-                - struts-app/**
-      - build_windows_agent:
-          filters:
-            paths:
-              only:
-                - windows-agent/**
-                - windows-agent.package/**
-                - ctxcloud.sln
+      - build_node_app
+      - build_struts_app
+      - build_windows_agent
