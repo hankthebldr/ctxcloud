@@ -9,13 +9,12 @@ orbs:
 
 jobs:
   build-struts-app:
-    # Uses a Docker executor with OpenJDK for building Java
     docker:
-      - image: cimg/openjdk:11.0  # CircleCI official OpenJDK 11
+      - image: cimg/openjdk:11.0
     steps:
       - checkout
       - run:
-          name: Build Struts App (Maven)
+          name: Build Struts App
           command: |
             cd struts-app
             mvn clean package
@@ -24,78 +23,6 @@ jobs:
           command: |
             cd struts-app
             docker build -t my-struts-app .
-      - run:
-          name: Security Scan (Placeholder)
-          command: |
-            echo "Running security scan on my-struts-app..."
-            # e.g. trivy image my-struts-app
-      - run:
-          name: Push Docker Image (Placeholder)
-          command: |
-            echo "Pushing Docker image to registry..."
-            # docker login -u $DOCKER_USER -p $DOCKER_PASS your-registry.com
-            # docker tag my-struts-app your-registry.com/my-struts-app:latest
-            # docker push your-registry.com/my-struts-app:latest
-
-  build-node-app:
-    # Uses a Docker executor with Node for building Node.js
-    docker:
-      - image: cimg/node:16.16
-    steps:
-      - checkout
-      - run:
-          name: Install Node Dependencies
-          command: |
-            cd node-app
-            npm install
-      - run:
-          name: Build Docker Image
-          command: |
-            cd node-app
-            docker build -t my-node-app .
-      - run:
-          name: Security Scan (Placeholder)
-          command: |
-            echo "Running security scan on my-node-app..."
-            # e.g. trivy image my-node-app
-      - run:
-          name: Push Docker Image (Placeholder)
-          command: |
-            echo "Pushing Docker image to registry..."
-            # docker login -u $DOCKER_USER -p $DOCKER_PASS your-registry.com
-            # docker tag my-node-app your-registry.com/my-node-app:latest
-            # docker push your-registry.com/my-node-app:latest
-
-  build-windows-agent:
-    # Windows machine executor - only available on paid plans or self-hosted
-    machine:
-      image: "windows-server-2019-vs2019"  # CircleCI's official Windows image
-    steps:
-      - checkout
-      - run:
-          name: Restore and Build .NET
-          command: |
-            cd windows-agent
-            dotnet restore
-            dotnet build --configuration Release
-      - run:
-          name: Publish Docker Image
-          command: |
-            cd windows-agent
-            docker build -t my-windows-agent .
-      - run:
-          name: Security Scan (Placeholder)
-          command: |
-            echo "Running security scan on my-windows-agent..."
-            # e.g. trivy image my-windows-agent
-      - run:
-          name: Push Docker Image (Placeholder)
-          command: |
-            echo "Pushing Docker image to registry..."
-            # docker login -u $DOCKER_USER -p $DOCKER_PASS your-registry.com
-            # docker tag my-windows-agent your-registry.com/my-windows-agent:latest
-            # docker push your-registry.com/my-windows-agent:latest
-
 workflows:
   build-and-deploy:
     jobs:
