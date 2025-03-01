@@ -13,7 +13,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <struts.version>2.5.30</struts.version>
+        <struts.version>6.4.0</struts.version>
         <!-- Use a known vulnerable version for demonstration if you desire (not recommended in production) -->
     </properties>
 
