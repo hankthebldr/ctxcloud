@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ctxcloud-chat
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ctxcloud-chat
+  template:
+    metadata:
+      labels:
+        app: ctxcloud-chat
+    spec:
+      containers:
+        - name: ctxcloud-chat
+          image: YOUR_DOCKERHUB_IMAGE:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: FIREBASE_PROJECT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: firebase-secret
+                  key: FIREBASE_PROJECT_ID
+            - name: FIREBASE_CLIENT_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: firebase-secret
+                  key: FIREBASE_CLIENT_EMAIL
+            - name: FIREBASE_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: firebase-secret
+                  key: FIREBASE_PRIVATE_KEY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ctxcloud-chat-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: ctxcloud-chat
+  ports:
+    - port: 80
+      targetPort: 8080
+
+---

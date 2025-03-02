@@ -7,7 +7,7 @@ require('dotenv').config(); // Ensure you have a .env file if using environment 
  * Module Imports
  ******************************************************/
 const express = require('express');
-const helmet = require('helmet');
+const helmet = require('./node_modules/helmet/index.d.cts');
 
 /******************************************************
  * Initialize App
