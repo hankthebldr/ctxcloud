@@ -1,18 +1,23 @@
+require('dotenv').config();
 const express = require('express');
-const secrets = require('./secrets');
+const helmet = require('helmet');
+// e.g., const { check, validationResult } = require('express-validator');
 
 const app = express();
+
+// Middleware
 app.use(express.json());
+app.use(helmet());
 
-// Insecure: No helmet, no input validation, no CSRF protections
+// Example route: /login
 app.post('/login', (req, res) => {
-  // Insecure: Logging sensitive info
-  console.log("User credentials received:", req.body);
-
-  // Insecure: Hardcoded credential check
+  // Input validation can be done here
+  // No console logs of credentials
+  const { username, password } = req.body;
+  
   if (
-    req.body.username === secrets.DEMO_USER && 
-    req.body.password === secrets.DEMO_PASS
+    username === process.env.DEMO_USER && 
+    password === process.env.DEMO_PASS
   ) {
     return res.send('Login successful!');
   } else {
@@ -20,16 +25,18 @@ app.post('/login', (req, res) => {
   }
 });
 
-app.get('/debug-info', (req, res) => {
-  // Insecure: Exposing stack info and environment variables
-  const debugData = {
-    nodeVersion: process.version,
-    environment: process.env,
-    secrets: secrets
-  };
-  return res.json(debugData);
-});
+// Example route: debug-info (only for local dev)
+if (process.env.NODE_ENV === 'development') {
+  app.get('/debug-info', (req, res) => {
+    // Do not expose environment or secrets in a real environment
+    const debugData = {
+      nodeVersion: process.version,
+      environment: process.env.NODE_ENV,
+    };
+    return res.json(debugData);
+  });
+}
 
 app.listen(3000, () => {
-  console.log('Vulnerable Node app listening on port 3000');
+  console.log('Secure-ish Node app listening on port 3000');
 });
