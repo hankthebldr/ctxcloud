@@ -1,15 +1,73 @@
 version: 2.1
-setup: true
-orbs:
-  path-filtering: circleci/path-filtering@1.0
+
+executors:
+  node_executor:
+    docker:
+      - image: cimg/node:lts
+  java_executor:
+    docker:
+      - image: cimg/openjdk:11.0
+
+jobs:
+  # Node.js Web Application Job
+  build_node_app:
+    executor: node_executor
+    working_directory: ~/project/node-app
+    steps:
+      - checkout:
+          path: ~/project
+      - restore_cache:
+          keys:
+            - node-app-{{ checksum "node-app/package-lock.json" }}
+      - run:
+          name: Install Dependencies
+          command: npm ci
+      - run:
+          name: Run Tests and Coverage
+          command: npm run test:coverage
+      - save_cache:
+          paths:
+            - ~/.npm
+          key: node-app-{{ checksum "node-app/package-lock.json" }}
+      - setup_remote_docker
+      - run:
+          name: Build and Push Docker Image
+          command: |
+            docker build -t myregistry.example.com/ctxcloud-node-app:${CIRCLE_SHA1} .
+            docker login -u $DOCKER_USER -p $DOCKER_PASS myregistry.example.com
+            docker push myregistry.example.com/ctxcloud-node-app:${CIRCLE_SHA1}
+      - store_artifacts:
+          path: coverage
+          destination: coverage-report
+
+  # Struts Java Web Application Job
+  build_struts_app:
+    executor: java_executor
+    working_directory: ~/project/struts-app/src
+    steps:
+      - checkout:
+          path: ~/project
+      - restore_cache:
+          keys:
+            - struts-maven-cache-{{ checksum "struts-app/src/pom.xml" }}
+      - run:
+          name: Maven Build and Tests
+          command: mvn -B clean verify
+      - save_cache:
+          paths:
+            - ~/.m2/repository
+          key: struts-maven-cache-{{ checksum "struts-app/src/pom.xml" }}
+      - run:
+          name: Checkstyle and FindBugs Reports (optional)
+          command: mvn checkstyle:check findbugs:check
+      - store_artifacts:
+          path: target/*.war
+          destination: struts-war
+      - store_test_results:
+          path: target/surefire-reports
+
 workflows:
-  filter-workflow:
+  ctxcloud_webapps_pipeline:
     jobs:
-      - path-filtering/filter:
-          base-revision: main
-          mapping: |
-            node-app/.* build_node_app true
-            struts-app/.* build_struts_app true
-            windows-agent/.* build_windows_agent true
-            windows-agent.package/.* build_windows_agent true
-            ctxcloud.sln build_windows_agent true
+      - build_node_app
+      - build_struts_app
