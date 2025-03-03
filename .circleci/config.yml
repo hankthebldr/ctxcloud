@@ -21,7 +21,6 @@ jobs:
             echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
             docker push YOUR_DOCKERHUB_IMAGE/frontend:latest
             docker push YOUR_DOCKERHUB_IMAGE/backend:latest
-
   deploy_to_k8s:
     docker:
       - image: cimg/base:stable
