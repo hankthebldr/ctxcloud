@@ -8,14 +8,19 @@ jobs:
       - checkout
       - setup_remote_docker
       - run:
-          name: Build Docker Image
+          name: Build Docker Images
           command: |
-            docker build -t YOUR_DOCKERHUB_IMAGE:latest -f deployment/Dockerfile .
+            # Build Frontend
+            docker build -t YOUR_DOCKERHUB_IMAGE/frontend:latest -f frontend/Dockerfile frontend
+            # Build Backend
+            docker build -t YOUR_DOCKERHUB_IMAGE/backend:latest -f backend/Dockerfile backend
+
       - run:
-          name: Push Docker Image
+          name: Push Docker Images
           command: |
             echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-            docker push YOUR_DOCKERHUB_IMAGE:latest
+            docker push YOUR_DOCKERHUB_IMAGE/frontend:latest
+            docker push YOUR_DOCKERHUB_IMAGE/backend:latest
 
   deploy_to_k8s:
     docker:
@@ -31,8 +36,11 @@ jobs:
       - run:
           name: Deploy to Kubernetes
           command: |
+            # Decode the KUBECONFIG
             echo "$KUBECONFIG_DATA" | base64 -d > kubeconfig.yaml
             export KUBECONFIG=$(pwd)/kubeconfig.yaml
+
+            # Apply the manifests
             kubectl apply -f deployment/k8s/deployment.yaml
             kubectl apply -f deployment/k8s/service.yaml
 
