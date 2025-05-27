@@ -1,0 +1,19 @@
+{
+  "name": "ctxcloud",
+  "version": "1.0.0",
+  "main": "index.jsp",
+  "scripts": {
+    "test": "HellowWorldActions.java"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hankthebldr/ctxcloud.git"
+  },
+  "author": "henry reed",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hankthebldr/ctxcloud/issues"
+  },
+  "homepage": "https://github.com/hankthebldr/ctxcloud#readme",
+  "description": ""
+}
